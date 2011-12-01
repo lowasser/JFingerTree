@@ -62,6 +62,7 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
     this.contents = contents;
   }
 
+  @Override
   public E index(int i) {
     for (T sub : contents) {
       int len = sub.length();
@@ -74,6 +75,7 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
     throw new IndexOutOfBoundsException();
   }
 
+  @Override
   public int length() {
     int len = 0;
     for (T t : contents) {
@@ -82,10 +84,12 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
     return len;
   }
 
+  @Override
   public T get(int i) {
     return contents[i];
   }
 
+  @Override
   public int size() {
     return contents.length;
   }
@@ -220,6 +224,7 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
     }
   }
 
+  @Override
   public Iterator<E> iterator() {
     return Iterables.concat(contents).iterator();
   }

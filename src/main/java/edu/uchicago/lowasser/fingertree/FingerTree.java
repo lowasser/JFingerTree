@@ -103,10 +103,12 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
 
   @SuppressWarnings("rawtypes")
   private static final FingerTree EMPTY = new FingerTree() {
+    @Override
     public Object index(int i) {
       throw new IndexOutOfBoundsException();
     }
 
+    @Override
     public int length() {
       return 0;
     }
@@ -159,6 +161,7 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       return other.consAll(m);
     }
 
+    @Override
     public Iterator iterator() {
       return Iterators.emptyIterator();
     }
@@ -183,10 +186,12 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       this.value = checkNotNull(value);
     }
 
+    @Override
     public E index(int i) {
       return value.index(i);
     }
 
+    @Override
     public int length() {
       return value.length();
     }
@@ -236,6 +241,7 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       return other.consAll(m).cons(value);
     }
 
+    @Override
     public Iterator<E> iterator() {
       return value.iterator();
     }
@@ -274,6 +280,7 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       this(pre, mid, suf, pre.length() + mid.length() + suf.length());
     }
 
+    @Override
     public E index(int i) {
       int prlen = pre.length();
       if (i < prlen) {
@@ -285,6 +292,7 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       return (i < midlen) ? mid.index(i) : suf.index(i - midlen);
     }
 
+    @Override
     public int length() {
       return length;
     }
@@ -359,6 +367,7 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       return deep(this.pre, addDigits(this.mid, this.suf, m, deep.pre, deep.mid), deep.suf);
     }
 
+    @Override
     public Iterator<E> iterator() {
       return Iterables.concat(pre, mid, suf).iterator();
     }

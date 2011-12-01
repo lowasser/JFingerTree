@@ -17,6 +17,7 @@ final class Elem<E> implements Container<E> {
     this.value = value;
   }
 
+  @Override
   public E index(int i) {
     if (i != 0) {
       throw new IndexOutOfBoundsException();
@@ -24,10 +25,12 @@ final class Elem<E> implements Container<E> {
     return value;
   }
 
+  @Override
   public int length() {
     return 1;
   }
 
+  @Override
   public Iterator<E> iterator() {
     return Iterators.singletonIterator(value);
   }

@@ -37,10 +37,12 @@ final class Node<E, T extends Container<E>> implements DeepContainer<E, T> {
     this.length = a.length() + b.length() + c.length();
   }
 
+  @Override
   public final int length() {
     return length;
   }
 
+  @Override
   public E index(int i) {
     for (T sub : contents) {
       int len = sub.length();
@@ -53,10 +55,12 @@ final class Node<E, T extends Container<E>> implements DeepContainer<E, T> {
     throw new IndexOutOfBoundsException();
   }
 
+  @Override
   public T get(int i) {
     return contents[i];
   }
 
+  @Override
   public int size() {
     return contents.length;
   }
@@ -65,6 +69,7 @@ final class Node<E, T extends Container<E>> implements DeepContainer<E, T> {
     return new Digit<E, T>(contents);
   }
 
+  @Override
   public Iterator<E> iterator() {
     return Iterables.concat(contents).iterator();
   }
