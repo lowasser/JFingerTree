@@ -2,6 +2,13 @@ package edu.uchicago.lowasser.fingertree;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import com.google.common.collect.Iterables;
+
 final class Node<E, T extends Container<E>> implements DeepContainer<E, T> {
   private final T[] contents;
   private final int length;
@@ -12,6 +19,10 @@ final class Node<E, T extends Container<E>> implements DeepContainer<E, T> {
 
   public static <E, T extends Container<E>> Node<E, T> of(T a, T b, T c) {
     return new Node<E, T>(checkNotNull(a), checkNotNull(b), checkNotNull(c));
+  }
+
+  public List<T> asList() {
+    return Collections.unmodifiableList(Arrays.asList(contents));
   }
 
   @SuppressWarnings("unchecked")
@@ -51,6 +62,10 @@ final class Node<E, T extends Container<E>> implements DeepContainer<E, T> {
   }
 
   public Digit<E, T> asDigit() {
-    return new Digit<E, T>(contents, length);
+    return new Digit<E, T>(contents);
+  }
+
+  public Iterator<E> iterator() {
+    return Iterables.concat(contents).iterator();
   }
 }

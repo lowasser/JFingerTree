@@ -4,8 +4,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 
 final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
   public static <E, T extends Container<E>> Digit<E, T> of(T a) {
@@ -24,36 +28,38 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
     return new Digit<E, T>(a, b, c, d);
   }
 
-  private final T[] contents;
-  private final int length;
+  final T[] contents;
+
+  public final List<T> asList() {
+    return Collections.unmodifiableList(Arrays.asList(contents));
+  }
 
   @SuppressWarnings("unchecked")
   private Digit(T a) {
-    this((T[]) new Container[] { a }, a.length());
+    this((T[]) new Container[] { a });
   }
 
   @SuppressWarnings("unchecked")
   private Digit(T a, T b) {
-    this((T[]) new Container[] { a, b }, a.length() + b.length());
+    this((T[]) new Container[] { a, b });
   }
 
   @SuppressWarnings("unchecked")
   private Digit(T a, T b, T c) {
-    this((T[]) new Container[] { a, b, c }, a.length() + b.length() + c.length());
+    this((T[]) new Container[] { a, b, c });
   }
 
   @SuppressWarnings("unchecked")
   private Digit(T a, T b, T c, T d) {
-    this((T[]) new Container[] { a, b, c, d }, a.length() + b.length() + c.length() + d.length());
+    this((T[]) new Container[] { a, b, c, d });
   }
 
-  Digit(T[] contents, int length) {
+  Digit(T[] contents) {
     checkArgument(contents.length >= 1 && contents.length <= 4);
     for (T t : contents) {
       checkNotNull(t);
     }
     this.contents = contents;
-    this.length = length;
   }
 
   public E index(int i) {
@@ -69,7 +75,11 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
   }
 
   public int length() {
-    return length;
+    int len = 0;
+    for (T t : contents) {
+      len += t.length();
+    }
+    return len;
   }
 
   public T get(int i) {
@@ -98,9 +108,8 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
         return View.of(contents[0], Optional.<Digit<E, T>> absent());
       default:
         int last = contents.length - 1;
-        int newLen = length - contents[last].length();
         T[] newContents = Arrays.copyOfRange(contents, 0, last);
-        return View.of(contents[last], Optional.of(new Digit<E, T>(newContents, newLen)));
+        return View.of(contents[last], Optional.of(new Digit<E, T>(newContents)));
     }
   }
 
@@ -109,9 +118,8 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
       case 1:
         return Optional.absent();
       default:
-        int newLen = length - contents[0].length();
         T[] newContents = Arrays.copyOfRange(contents, 1, contents.length);
-        return Optional.of(new Digit<E, T>(newContents, newLen));
+        return Optional.of(new Digit<E, T>(newContents));
     }
   }
 
@@ -121,9 +129,8 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
         return Optional.absent();
       default:
         int last = contents.length - 1;
-        int newLen = length - contents[last].length();
         T[] newContents = Arrays.copyOfRange(contents, 0, last);
-        return Optional.of(new Digit<E, T>(newContents, newLen));
+        return Optional.of(new Digit<E, T>(newContents));
     }
   }
 
@@ -159,10 +166,45 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
         @SuppressWarnings("unchecked")
         T[] newContents = (T[]) new Container[contents.length + 1];
         System.arraycopy(contents, 0, newContents, 1, contents.length);
-        int newLength = length + t.length();
         newContents[0] = t;
-        return View.of(new Digit<E, T>(newContents, newLength), Optional.<Node<E, T>> absent());
+        return View.of(new Digit<E, T>(newContents), Optional.<Node<E, T>> absent());
     }
+  }
+
+  public View<Digit<E, T>, Node<E, T>[]> cons(Digit<E, T> digit) {
+    int p = 0;
+    @SuppressWarnings("unchecked")
+    T[] tmp = (T[]) new Container[8];
+    System.arraycopy(contents, 0, tmp, p, size());
+    p += size();
+    System.arraycopy(digit.contents, 0, tmp, p, digit.size());
+    p += digit.size();
+
+    int nNodes = (p - 2) / 3; // >= 0
+    @SuppressWarnings("unchecked")
+    Node<E, T>[] nodes = new Node[nNodes];
+    for (int i = p - (3 * nNodes), j = 0; j < nNodes; i += 3, j++) {
+      nodes[j] = Node.of(tmp[i], tmp[i + 1], tmp[i + 2]);
+    }
+    return View.of(new Digit<E, T>(Arrays.copyOf(tmp, p - (3 * nNodes))), nodes);
+  }
+
+  public View<Digit<E, T>, Node<E, T>[]> snoc(Digit<E, T> digit) {
+    int p = 0;
+    @SuppressWarnings("unchecked")
+    T[] tmp = (T[]) new Container[8];
+    System.arraycopy(digit.contents, 0, tmp, p, digit.size());
+    p += digit.size();
+    System.arraycopy(contents, 0, tmp, p, size());
+    p += size();
+
+    int nNodes = (p - 2) / 3;
+    @SuppressWarnings("unchecked")
+    Node<E, T>[] nodes = new Node[nNodes];
+    for (int i = 0, j = 0; j < nNodes; i += 3, j++) {
+      nodes[j] = Node.of(tmp[i], tmp[i + 1], tmp[i + 2]);
+    }
+    return View.of(new Digit<E, T>(Arrays.copyOfRange(tmp, 3 * nNodes, p)), nodes);
   }
 
   public View<Digit<E, T>, Optional<Node<E, T>>> snoc(T t) {
@@ -174,8 +216,11 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
       default:
         T[] newContents = Arrays.copyOf(contents, contents.length + 1);
         newContents[contents.length] = t;
-        int newLength = length + t.length();
-        return View.of(new Digit<E, T>(newContents, newLength), Optional.<Node<E, T>> absent());
+        return View.of(new Digit<E, T>(newContents), Optional.<Node<E, T>> absent());
     }
+  }
+
+  public Iterator<E> iterator() {
+    return Iterables.concat(contents).iterator();
   }
 }
