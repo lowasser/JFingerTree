@@ -23,7 +23,8 @@ public class FingerTreeTests {
   static {
     ImmutableList.Builder<FingerTree<Integer, Elem<Integer>>> builder = ImmutableList.builder();
     for (int i = 0; i <= SAMPLE_ELEMS.size(); i++) {
-
+      builder.add(FingerTree.fromList(SAMPLE_ELEMS.subList(0, i)));
     }
+    SAMPLE_TREES = builder.build();
   }
 }

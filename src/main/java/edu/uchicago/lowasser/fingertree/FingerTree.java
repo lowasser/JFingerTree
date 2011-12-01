@@ -2,7 +2,9 @@ package edu.uchicago.lowasser.fingertree;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
@@ -27,7 +29,24 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
     return new Deep<E, T>(pre, mid, suf);
   }
 
-  private static <E, T extends Container<E>> FingerTree<E, T> small(T[] contents) {
+  public static <E, T extends Container<E>> FingerTree<E, T> fromList(List<T> list) {
+    int len = list.size();
+    if (len <= 8) {
+      return small(list);
+    } else {
+      Digit<E, T> left = new Digit<E, T>(list.subList(0, 4));
+      Digit<E, T> right = new Digit<E, T>(list.subList(len - 4, 4));
+      List<T> midElems = list.subList(4, len - 4);
+      return deep(left, fromList(Arrays.asList(groupIntoNodes(midElems))), right);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  static <E, T extends Container<E>> FingerTree<E, T> small(List<T> contents) {
+    return small(contents.toArray((T[]) new Container[0]));
+  }
+
+  static <E, T extends Container<E>> FingerTree<E, T> small(T[] contents) {
     FingerTree<E, Node<E, T>> emptyDeep = empty();
     switch (contents.length) {
       case 0:
@@ -35,19 +54,18 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       case 1:
         return single(contents[0]);
       case 2:
-        return deep(Digit.of(contents[0]), emptyDeep, Digit.of(contents[1]));
       case 3:
-        return deep(Digit.of(contents[0], contents[1]), emptyDeep, Digit.of(contents[2]));
       case 4:
-        return deep(
-            Digit.of(contents[0], contents[1]),
-            emptyDeep,
-            Digit.of(contents[2], contents[3]));
       case 5:
+      case 6:
+      case 7:
+      case 8:
+        int right = contents.length >> 1;
+        int left = contents.length - right;
         return deep(
-            Digit.of(contents[0], contents[1], contents[2]),
+            new Digit<E, T>(Arrays.copyOfRange(contents, 0, left)),
             emptyDeep,
-            Digit.of(contents[3], contents[4]));
+            new Digit<E, T>(Arrays.copyOfRange(contents, left, contents.length)));
       default:
         throw new AssertionError();
     }
@@ -405,7 +423,6 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
     }
   }
 
-  @SuppressWarnings("unchecked")
   private static <E, T extends Container<E>> FingerTree<E, Node<E, T>> addDigits(
       FingerTree<E, Node<E, T>> m1,
       Digit<E, T> d1,
@@ -413,6 +430,7 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
       Digit<E, T> d2,
       FingerTree<E, Node<E, T>> m2) {
 
+    @SuppressWarnings("unchecked")
     T[] tmp = (T[]) new Container[12];
     int p = 0;
     System.arraycopy(d1.contents, 0, tmp, p, d1.size());
@@ -421,34 +439,39 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
     p += mid.length;
     System.arraycopy(d2.contents, 0, tmp, p, d2.size());
     p += d2.size();
-
     // Each of d1 and d2 are at least 1, so p >= 2.
+    return m1.appendTree(FingerTree.<E, T> groupIntoNodes(Arrays.asList(tmp).subList(0, p)), m2);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <E, T extends Container<E>> Node<E, T>[] groupIntoNodes(List<T> contents) {
+    int length = contents.size();
+    assert length >= 2;
     Node<E, T>[] nodes;
-    switch (p % 3) {
+    switch (length % 3) {
       case 0:
-        nodes = new Node[p / 3];
+        nodes = new Node[length / 3];
         for (int i = 0, j = 0; j < nodes.length; i += 3, j++) {
-          nodes[j] = Node.of(tmp[i], tmp[i + 1], tmp[i + 2]);
+          nodes[j] = Node.of(contents.get(i), contents.get(i + 1), contents.get(i + 2));
         }
-        break;
+        return nodes;
       case 1:
-        nodes = new Node[(p - 4) / 3 + 2];
-        nodes[0] = Node.of(tmp[0], tmp[1]);
-        nodes[nodes.length - 1] = Node.of(tmp[p - 2], tmp[p - 1]);
+        nodes = new Node[(length - 4) / 3 + 2];
+        nodes[0] = Node.of(contents.get(0), contents.get(1));
+        nodes[nodes.length - 1] = Node.of(contents.get(length - 2), contents.get(length - 1));
         for (int i = 2, j = 1; j < nodes.length - 1; i += 3, j++) {
-          nodes[j] = Node.of(tmp[i], tmp[i + 1], tmp[i + 2]);
+          nodes[j] = Node.of(contents.get(i), contents.get(i + 1), contents.get(i + 2));
         }
-        break;
+        return nodes;
       case 2:
-        nodes = new Node[p / 3 + 1];
-        nodes[0] = Node.of(tmp[0], tmp[1]);
+        nodes = new Node[length / 3 + 1];
+        nodes[0] = Node.of(contents.get(0), contents.get(1));
         for (int i = 2, j = 1; j < nodes.length; i += 3, j++) {
-          nodes[j] = Node.of(tmp[i], tmp[i + 1], tmp[i + 2]);
+          nodes[j] = Node.of(contents.get(i), contents.get(i + 1), contents.get(i + 2));
         }
-        break;
+        return nodes;
       default:
         throw new AssertionError();
     }
-    return m1.appendTree(nodes, m2);
   }
 }

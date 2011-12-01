@@ -62,6 +62,11 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
     this.contents = contents;
   }
 
+  @SuppressWarnings("unchecked")
+  Digit(List<T> list) {
+    this(list.toArray((T[]) new Container[0]));
+  }
+
   @Override
   public E index(int i) {
     for (T sub : contents) {
@@ -139,25 +144,7 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
   }
 
   public FingerTree<E, T> asFingerTree() {
-    FingerTree<E, Node<E, T>> deepEmpty = FingerTree.empty();
-    switch (contents.length) {
-      case 1:
-        return FingerTree.single(contents[0]);
-      case 2:
-        return FingerTree.deep(Digit.of(contents[0]), deepEmpty, Digit.of(contents[1]));
-      case 3:
-        return FingerTree.deep(
-            Digit.of(contents[0], contents[1]),
-            deepEmpty,
-            Digit.of(contents[2]));
-      case 4:
-        return FingerTree.deep(
-            Digit.of(contents[0], contents[1]),
-            deepEmpty,
-            Digit.of(contents[2], contents[3]));
-      default:
-        throw new AssertionError();
-    }
+    return FingerTree.small(contents);
   }
 
   public View<Digit<E, T>, Optional<Node<E, T>>> cons(T t) {
