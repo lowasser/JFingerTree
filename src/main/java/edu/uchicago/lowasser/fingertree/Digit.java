@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import com.google.common.base.Optional;
 
-final class Digit<E, T extends Container<E>> implements MetaContainer<E, T> {
+final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
   public static <E, T extends Container<E>> Digit<E, T> of(T a) {
     return new Digit<E, T>(a);
   }
@@ -80,6 +80,30 @@ final class Digit<E, T extends Container<E>> implements MetaContainer<E, T> {
     return contents.length;
   }
 
+  public T first() {
+    return contents[0];
+  }
+
+  public T last() {
+    return contents[contents.length - 1];
+  }
+
+  public View<T, Optional<Digit<E, T>>> viewL() {
+    return View.of(contents[0], tail());
+  }
+
+  public View<T, Optional<Digit<E, T>>> viewR() {
+    switch (contents.length) {
+      case 1:
+        return View.of(contents[0], Optional.<Digit<E, T>> absent());
+      default:
+        int last = contents.length - 1;
+        int newLen = length - contents[last].length();
+        T[] newContents = Arrays.copyOfRange(contents, 0, last);
+        return View.of(contents[last], Optional.of(new Digit<E, T>(newContents, newLen)));
+    }
+  }
+
   public Optional<Digit<E, T>> tail() {
     switch (contents.length) {
       case 1:
@@ -100,6 +124,28 @@ final class Digit<E, T extends Container<E>> implements MetaContainer<E, T> {
         int newLen = length - contents[last].length();
         T[] newContents = Arrays.copyOfRange(contents, 0, last);
         return Optional.of(new Digit<E, T>(newContents, newLen));
+    }
+  }
+
+  public FingerTree<E, T> asFingerTree() {
+    FingerTree<E, Node<E, T>> deepEmpty = FingerTree.empty();
+    switch (contents.length) {
+      case 1:
+        return FingerTree.single(contents[0]);
+      case 2:
+        return FingerTree.deep(Digit.of(contents[0]), deepEmpty, Digit.of(contents[1]));
+      case 3:
+        return FingerTree.deep(
+            Digit.of(contents[0], contents[1]),
+            deepEmpty,
+            Digit.of(contents[2]));
+      case 4:
+        return FingerTree.deep(
+            Digit.of(contents[0], contents[1]),
+            deepEmpty,
+            Digit.of(contents[2], contents[3]));
+      default:
+        throw new AssertionError();
     }
   }
 }

@@ -2,7 +2,7 @@ package edu.uchicago.lowasser.fingertree;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-final class Node<E, T extends Container<E>> implements MetaContainer<E, T> {
+final class Node<E, T extends Container<E>> implements DeepContainer<E, T> {
   private final T[] contents;
   private final int length;
 
