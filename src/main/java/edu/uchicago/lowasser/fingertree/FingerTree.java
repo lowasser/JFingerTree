@@ -48,6 +48,10 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
 
   public abstract Optional<View<T, FingerTree<E, T>>> viewR();
 
+  public abstract FingerTree<E, T> cons(T t);
+
+  public abstract FingerTree<E, T> snoc(T t);
+
   @SuppressWarnings("rawtypes")
   private static final FingerTree EMPTY = new FingerTree() {
     public Object index(int i) {
@@ -86,6 +90,18 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
     @Override
     public Optional init() {
       return Optional.absent();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public FingerTree cons(Container t) {
+      return FingerTree.single(t);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public FingerTree snoc(Container t) {
+      return FingerTree.single(t);
     }
   };
 
@@ -133,6 +149,16 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
     public Optional<FingerTree<E, T>> init() {
       return Optional.of(FingerTree.<E, T> empty());
     }
+
+    @Override
+    public FingerTree<E, T> cons(T t) {
+      return deep(Digit.of(t), FingerTree.<E, Node<E, T>> empty(), Digit.of(value));
+    }
+
+    @Override
+    public FingerTree<E, T> snoc(T t) {
+      return deep(Digit.of(value), FingerTree.<E, Node<E, T>> empty(), Digit.of(t));
+    }
   }
 
   private static final class Deep<E, T extends Container<E>> extends FingerTree<E, T> {
@@ -141,11 +167,15 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
     private final Digit<E, T> suf;
     private final int length;
 
-    private Deep(Digit<E, T> pre, FingerTree<E, Node<E, T>> mid, Digit<E, T> suf) {
+    private Deep(Digit<E, T> pre, FingerTree<E, Node<E, T>> mid, Digit<E, T> suf, int length) {
       this.pre = checkNotNull(pre);
       this.mid = checkNotNull(mid);
       this.suf = checkNotNull(suf);
-      this.length = pre.length() + mid.length() + suf.length();
+      this.length = length;
+    }
+
+    private Deep(Digit<E, T> pre, FingerTree<E, Node<E, T>> mid, Digit<E, T> suf) {
+      this(pre, mid, suf, pre.length() + mid.length() + suf.length());
     }
 
     public E index(int i) {
@@ -185,6 +215,22 @@ abstract class FingerTree<E, T extends Container<E>> implements Container<E> {
     @Override
     public Optional<T> last() {
       return Optional.of(suf.last());
+    }
+
+    @Override
+    public FingerTree<E, T> cons(T t) {
+      View<Digit<E, T>, Optional<Node<E, T>>> preCons = pre.cons(t);
+      Optional<Node<E, T>> remainder = preCons.getRemainder();
+      FingerTree<E, Node<E, T>> newMid = remainder.isPresent() ? mid.cons(remainder.get()) : mid;
+      return new Deep<E, T>(preCons.getEnd(), newMid, suf, length + t.length());
+    }
+
+    @Override
+    public FingerTree<E, T> snoc(T t) {
+      View<Digit<E, T>, Optional<Node<E, T>>> sufSnoc = suf.snoc(t);
+      Optional<Node<E, T>> remainder = sufSnoc.getRemainder();
+      FingerTree<E, Node<E, T>> newMid = remainder.isPresent() ? mid.snoc(remainder.get()) : mid;
+      return new Deep<E, T>(pre, newMid, sufSnoc.getEnd());
     }
   }
 

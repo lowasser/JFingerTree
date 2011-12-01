@@ -148,4 +148,34 @@ final class Digit<E, T extends Container<E>> implements DeepContainer<E, T> {
         throw new AssertionError();
     }
   }
+
+  public View<Digit<E, T>, Optional<Node<E, T>>> cons(T t) {
+    checkNotNull(t);
+    switch (contents.length) {
+      case 4:
+        Node<E, T> node = Node.of(contents[1], contents[2], contents[3]);
+        return View.of(Digit.of(t, contents[0]), Optional.of(node));
+      default:
+        @SuppressWarnings("unchecked")
+        T[] newContents = (T[]) new Container[contents.length + 1];
+        System.arraycopy(contents, 0, newContents, 1, contents.length);
+        int newLength = length + t.length();
+        newContents[0] = t;
+        return View.of(new Digit<E, T>(newContents, newLength), Optional.<Node<E, T>> absent());
+    }
+  }
+
+  public View<Digit<E, T>, Optional<Node<E, T>>> snoc(T t) {
+    checkNotNull(t);
+    switch (contents.length) {
+      case 4:
+        Node<E, T> node = Node.of(contents[0], contents[1], contents[2]);
+        return View.of(Digit.of(contents[3], t), Optional.of(node));
+      default:
+        T[] newContents = Arrays.copyOf(contents, contents.length + 1);
+        newContents[contents.length] = t;
+        int newLength = length + t.length();
+        return View.of(new Digit<E, T>(newContents, newLength), Optional.<Node<E, T>> absent());
+    }
+  }
 }
